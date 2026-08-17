@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strollopia TODO</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 24px 16px 60px; }
+
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+  h1 { font-size: 1.4rem; font-weight: 700; color: #111; }
+  h1 span { font-weight: 400; color: #888; font-size: 1rem; margin-left: 8px; }
+  .top-actions { display: flex; align-items: center; gap: 10px; }
+  .show-done-wrap label { font-size: 0.8rem; color: #888; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .save-btn { background: #1d4ed8; color: white; border: none; border-radius: 7px; padding: 7px 16px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .save-btn:hover { background: #1e40af; }
+  .save-btn.saved { background: #15803d; }
+
+  .repo { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+  .repo-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; cursor: pointer; user-select: none; }
+  .repo-header:hover { background: #fafafa; }
+  .repo-title { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
+  .repo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .repo-meta { font-size: 0.75rem; color: #999; }
+  .repo-toggle { color: #bbb; font-size: 0.8rem; transition: transform 0.15s; }
+  .repo-toggle.open { transform: rotate(180deg); }
+
+  .repo-body { padding: 0; }
+  .repo-body.collapsed { display: none; }
+
+  .item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 16px; border-bottom: 1px solid #f0f0f0; }
+  .item:last-of-type { border-bottom: none; }
+  .item:hover { background: #fafafa; }
+  .item input[type=checkbox] { margin-top: 2px; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; accent-color: #ea580c; }
+  .item label { font-size: 0.875rem; color: #222; cursor: pointer; line-height: 1.4; flex: 1; }
+  .item.done label { text-decoration: line-through; color: #aaa; }
+  .item .priority { font-size: 0.65rem; font-weight: 600; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; flex-shrink: 0; margin-top: 2px; }
+  .p-high   { background: #fee2e2; color: #b91c1c; }
+  .p-medium { background: #fef3c7; color: #92400e; }
+  .p-low    { background: #e0f2fe; color: #0369a1; }
+  .item .del-btn { background: none; border: none; color: #ddd; cursor: pointer; font-size: 0.8rem; padding: 0 2px; flex-shrink: 0; margin-top: 1px; line-height: 1; }
+  .item .del-btn:hover { color: #f87171; }
+
+  .add-row { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid #f0f0f0; background: #fafafa; }
+  .add-row input[type=text] { flex: 1; border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 10px; font-size: 0.82rem; }
+  .add-row input[type=text]:focus { outline: none; border-color: #ea580c; }
+  .add-row select { border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 8px; font-size: 0.82rem; color: #555; background: #fff; }
+  .add-row button { background: #ea580c; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.82rem; cursor: pointer; }
+  .add-row button:hover { background: #c2410c; }
+
+  .howto { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 16px; margin-bottom: 20px; font-size: 0.82rem; color: #555; }
+  .howto summary { cursor: pointer; font-weight: 600; color: #92400e; user-select: none; }
+  .howto ol { margin: 10px 0 10px 18px; line-height: 1.8; }
+  .howto p { margin-top: 8px; }
+  .howto code { background: #fef3c7; padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; }
+
+  .dot-api    { background: #7c3aed; }
+  .dot-pwa    { background: #0284c7; }
+  .dot-native { background: #059669; }
+  .dot-scripts{ background: #d97706; }
+  .dot-dl     { background: #db2777; }
+  .dot-other  { background: #64748b; }
+</style>
+</head>
+<body>
+
+<!--
+  HOW TO UPDATE THIS FILE
+  ───────────────────────
+  1. Open todo.html in your browser (double-click or use the Desktop shortcut).
+  2. Check off items, add new ones with the "+ Add item" row at the bottom of each section.
+  3. Click "⬇ Save file" — this downloads an updated todo.html to ~/Downloads.
+  4. Replace this file with the download:
+       cp ~/Downloads/todo.html ~/strollopia_git_hub/todo.html
+  5. Commit and push:
+       cd ~/strollopia_git_hub && git add todo.html && git commit -m "update todo" && git push
+
+  To add a built-in seed item (tracked in git as code, not just state):
+  Edit the REPOS array in the <script> block below and save the file directly.
+  No need to use the browser Save button for that — just edit and commit.
+-->
+
+<!-- All checkbox state and custom items live here. Updated on every change.
+     "Save file" downloads the page HTML with this tag already updated,
+     so the saved file is the new source of truth. Commit that file to git. -->
+<script type="application/json" id="todo-state">
+{
+  "checks": {},
+  "custom": [
+    {
+      "id": "strollopia-pwa-c-1786638094949",
+      "repo": "strollopia-pwa",
+      "text": "group models in Django admin better",
+      "priority": "low"
+    },
+    {
+      "id": "strollopia-api-c-1786639964424",
+      "repo": "strollopia-api",
+      "text": "group models in Django Admin better",
+      "priority": "low"
+    }
+  ]
+}
+</script>
+
+<div class="top-bar">
+  <h1>Strollopia TODO <span id="global-stats">0 of 29 done</span></h1>
+  <div class="top-actions">
+    <div class="show-done-wrap">
+      <label><input type="checkbox" id="toggle-done"> Show completed</label>
+    </div>
+    <button class="save-btn" id="save-btn" onclick="saveFile()">⬇ Save file</button>
+  </div>
+</div>
+
+<details class="howto" open="">
+  <summary>How to update this file</summary>
+  <ol>
+    <li>Check off items or add new ones using the <b>+ row</b> at the bottom of each section.</li>
+    <li>Click <b>⬇ Save file</b> — downloads an updated <code>todo.html</code> to ~/Downloads.</li>
+    <li>Replace this file with the download:<br><code>cp ~/Downloads/todo.html ~/strollopia_git_hub/todo.html</code></li>
+    <li>Commit and push:<br><code>cd ~/strollopia_git_hub &amp;&amp; git add todo.html &amp;&amp; git commit -m "update todo" &amp;&amp; git push</code></li>
+  </ol>
+  <p>To add a <b>built-in seed item</b> (stored in the file as code, not state): edit the <code>REPOS</code> array in the <code>&lt;script&gt;</code> block and commit the file directly — no need to use Save file for that.</p>
+</details>
+
+<div id="board"><div class="repo"><div class="repo-header">
+      <div class="repo-title">
+        <span class="repo-dot dot-pwa"></span>
+        strollopia-pwa
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">0/8 done</span>
+        <span class="repo-toggle open">▼</span>
+      </div></div><div class="repo-body"><div class="item"><input type="checkbox" id="cb-pwa-1"><label for="cb-pwa-1">Style the 404 page (currently unstyled — user reported at /teach/library)</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-pwa-2"><label for="cb-pwa-2">Builder: smoke-test map pan-to-stop fix on Chrome / Safari / mobile</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-pwa-3"><label for="cb-pwa-3">Library preview map: verify renders correctly for challenges with only 1 stop (fitBounds edge case)</label><span class="priority p-low">low</span></div><div class="item"><input type="checkbox" id="cb-pwa-4"><label for="cb-pwa-4">Teacher dashboard: progress view so teacher can see per-student activity completions</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-pwa-5"><label for="cb-pwa-5">Teach builder: edit and delete existing activities (currently only add)</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-pwa-6"><label for="cb-pwa-6">Teach builder: rename a stop</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-pwa-7"><label for="cb-pwa-7">Learner join flow: test join-by-code end-to-end on mobile</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-strollopia-pwa-c-1786638094949"><label for="cb-strollopia-pwa-c-1786638094949">group models in Django admin better</label><span class="priority p-low">low</span><button class="del-btn" title="Remove item">✕</button></div><div class="add-row"><input type="text" placeholder="Add item…"><select><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select><button>+</button></div></div></div><div class="repo"><div class="repo-header">
+      <div class="repo-title">
+        <span class="repo-dot dot-api"></span>
+        strollopia-api
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">0/10 done</span>
+        <span class="repo-toggle open">▼</span>
+      </div></div><div class="repo-body"><div class="item"><input type="checkbox" id="cb-api-1"><label for="cb-api-1">views_poi.py: Replace manual field assignments with serializer calls (multiple TODO comments in file)</label><span class="priority p-low">low</span></div><div class="item"><input type="checkbox" id="cb-api-2"><label for="cb-api-2">views_poi.py: Implement clear_existing parameter on bulk import endpoints</label><span class="priority p-low">low</span></div><div class="item"><input type="checkbox" id="cb-api-3"><label for="cb-api-3">org/serializers.py: Add validator that map_obj.OWNING_ORG_LOOKUP matches owning_org</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-api-4"><label for="cb-api-4">content/views_map.py: Filter map list to org-owned maps only (TODO comment)</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-api-5"><label for="cb-api-5">content/permissions.py: Remove anon-request fallback once frontend no longer sends anon requests</label><span class="priority p-low">low</span></div><div class="item"><input type="checkbox" id="cb-api-6"><label for="cb-api-6">core/permissions.py: Fix incorrect permission check (TODO comment)</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-api-7"><label for="cb-api-7">content/tests: Re-enable 3 skipped map API tests and fix underlying issues</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-api-8"><label for="cb-api-8">challenges: Add activity-level PATCH endpoint (currently only create)</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-api-9"><label for="cb-api-9">challenges: Add activity DELETE endpoint</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-strollopia-api-c-1786639964424"><label for="cb-strollopia-api-c-1786639964424">group models in Django Admin better</label><span class="priority p-low">low</span><button class="del-btn" title="Remove item">✕</button></div><div class="add-row"><input type="text" placeholder="Add item…"><select><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select><button>+</button></div></div></div><div class="repo"><div class="repo-header">
+      <div class="repo-title">
+        <span class="repo-dot dot-scripts"></span>
+        strollopia-scripts
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">0/6 done</span>
+        <span class="repo-toggle open">▼</span>
+      </div></div><div class="repo-body"><div class="item"><input type="checkbox" id="cb-scripts-1"><label for="cb-scripts-1">Seed Halifax Explosion challenge into dev → set is_template, category, publish in Django admin</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-scripts-2"><label for="cb-scripts-2">Seed Annapolis Royal history challenge into dev → set is_template, category, publish</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-scripts-3"><label for="cb-scripts-3">Seed Valley Art Map challenge into dev → set is_template, category, publish</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-scripts-4"><label for="cb-scripts-4">Seed Porta Claudia (German) challenge into dev → set is_template, category, publish</label><span class="priority p-high">high</span></div><div class="item"><input type="checkbox" id="cb-scripts-5"><label for="cb-scripts-5">Once happy with dev templates, re-seed all 4 new challenges to prod</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-scripts-6"><label for="cb-scripts-6">seed_challenge.py: add --update-existing flag to patch without duplicate creation</label><span class="priority p-low">low</span></div><div class="add-row"><input type="text" placeholder="Add item…"><select><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select><button>+</button></div></div></div><div class="repo"><div class="repo-header">
+      <div class="repo-title">
+        <span class="repo-dot dot-native"></span>
+        strollopia-native
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">0/1 done</span>
+        <span class="repo-toggle open">▼</span>
+      </div></div><div class="repo-body"><div class="item"><input type="checkbox" id="cb-native-1"><label for="cb-native-1">Audit current state of native app — what features are implemented vs PWA</label><span class="priority p-medium">medium</span></div><div class="add-row"><input type="text" placeholder="Add item…"><select><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select><button>+</button></div></div></div><div class="repo"><div class="repo-header">
+      <div class="repo-title">
+        <span class="repo-dot dot-dl"></span>
+        data_logger
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">0/1 done</span>
+        <span class="repo-toggle open">▼</span>
+      </div></div><div class="repo-body"><div class="item"><input type="checkbox" id="cb-dl-1"><label for="cb-dl-1">Review data_logger against API endpoints on feat/port-api-endpoints-to-data-logger branch</label><span class="priority p-medium">medium</span></div><div class="add-row"><input type="text" placeholder="Add item…"><select><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select><button>+</button></div></div></div><div class="repo"><div class="repo-header">
+      <div class="repo-title">
+        <span class="repo-dot dot-other"></span>
+        Other / Cross-repo
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">0/3 done</span>
+        <span class="repo-toggle open">▼</span>
+      </div></div><div class="repo-body"><div class="item"><input type="checkbox" id="cb-other-1"><label for="cb-other-1">feature-registry/registry.yaml: Update statuses for route_builder and sandbox (both in-progress)</label><span class="priority p-low">low</span></div><div class="item"><input type="checkbox" id="cb-other-2"><label for="cb-other-2">Set up CI: run Django tests on strollopia-api PRs</label><span class="priority p-medium">medium</span></div><div class="item"><input type="checkbox" id="cb-other-3"><label for="cb-other-3">Set up CI: run vitest on strollopia-pwa PRs</label><span class="priority p-medium">medium</span></div><div class="add-row"><input type="text" placeholder="Add item…"><select><option value="high">high</option><option value="medium">medium</option><option value="low">low</option></select><button>+</button></div></div></div></div>
+
+<script>
+// ─── Seed items ──────────────────────────────────────────────────────────────
+// Edit this REPOS array directly to add/remove built-in items.
+// Custom items added via the UI are stored in the JSON state tag above.
+
+const REPOS = [
+  {
+    id: 'strollopia-pwa',
+    label: 'strollopia-pwa',
+    dot: 'dot-pwa',
+    items: [
+      { id: 'pwa-1', text: 'Style the 404 page (currently unstyled — user reported at /teach/library)', priority: 'medium' },
+      { id: 'pwa-2', text: 'Builder: smoke-test map pan-to-stop fix on Chrome / Safari / mobile', priority: 'medium' },
+      { id: 'pwa-3', text: 'Library preview map: verify renders correctly for challenges with only 1 stop (fitBounds edge case)', priority: 'low' },
+      { id: 'pwa-4', text: 'Teacher dashboard: progress view so teacher can see per-student activity completions', priority: 'high' },
+      { id: 'pwa-5', text: 'Teach builder: edit and delete existing activities (currently only add)', priority: 'high' },
+      { id: 'pwa-6', text: 'Teach builder: rename a stop', priority: 'medium' },
+      { id: 'pwa-7', text: 'Learner join flow: test join-by-code end-to-end on mobile', priority: 'medium' },
+    ],
+  },
+  {
+    id: 'strollopia-api',
+    label: 'strollopia-api',
+    dot: 'dot-api',
+    items: [
+      { id: 'api-1', text: 'views_poi.py: Replace manual field assignments with serializer calls (multiple TODO comments in file)', priority: 'low' },
+      { id: 'api-2', text: 'views_poi.py: Implement clear_existing parameter on bulk import endpoints', priority: 'low' },
+      { id: 'api-3', text: 'org/serializers.py: Add validator that map_obj.OWNING_ORG_LOOKUP matches owning_org', priority: 'medium' },
+      { id: 'api-4', text: 'content/views_map.py: Filter map list to org-owned maps only (TODO comment)', priority: 'medium' },
+      { id: 'api-5', text: 'content/permissions.py: Remove anon-request fallback once frontend no longer sends anon requests', priority: 'low' },
+      { id: 'api-6', text: 'core/permissions.py: Fix incorrect permission check (TODO comment)', priority: 'medium' },
+      { id: 'api-7', text: 'content/tests: Re-enable 3 skipped map API tests and fix underlying issues', priority: 'medium' },
+      { id: 'api-8', text: 'challenges: Add activity-level PATCH endpoint (currently only create)', priority: 'high' },
+      { id: 'api-9', text: 'challenges: Add activity DELETE endpoint', priority: 'high' },
+    ],
+  },
+  {
+    id: 'strollopia-scripts',
+    label: 'strollopia-scripts',
+    dot: 'dot-scripts',
+    items: [
+      { id: 'scripts-1', text: 'Seed Halifax Explosion challenge into dev → set is_template, category, publish in Django admin', priority: 'high' },
+      { id: 'scripts-2', text: 'Seed Annapolis Royal history challenge into dev → set is_template, category, publish', priority: 'high' },
+      { id: 'scripts-3', text: 'Seed Valley Art Map challenge into dev → set is_template, category, publish', priority: 'high' },
+      { id: 'scripts-4', text: 'Seed Porta Claudia (German) challenge into dev → set is_template, category, publish', priority: 'high' },
+      { id: 'scripts-5', text: 'Once happy with dev templates, re-seed all 4 new challenges to prod', priority: 'medium' },
+      { id: 'scripts-6', text: 'seed_challenge.py: add --update-existing flag to patch without duplicate creation', priority: 'low' },
+    ],
+  },
+  {
+    id: 'strollopia-native',
+    label: 'strollopia-native',
+    dot: 'dot-native',
+    items: [
+      { id: 'native-1', text: 'Audit current state of native app — what features are implemented vs PWA', priority: 'medium' },
+    ],
+  },
+  {
+    id: 'data_logger',
+    label: 'data_logger',
+    dot: 'dot-dl',
+    items: [
+      { id: 'dl-1', text: 'Review data_logger against API endpoints on feat/port-api-endpoints-to-data-logger branch', priority: 'medium' },
+    ],
+  },
+  {
+    id: 'other',
+    label: 'Other / Cross-repo',
+    dot: 'dot-other',
+    items: [
+      { id: 'other-1', text: 'feature-registry/registry.yaml: Update statuses for route_builder and sandbox (both in-progress)', priority: 'low' },
+      { id: 'other-2', text: 'Set up CI: run Django tests on strollopia-api PRs', priority: 'medium' },
+      { id: 'other-3', text: 'Set up CI: run vitest on strollopia-pwa PRs', priority: 'medium' },
+      { id: 'other-4', text: 'Marketplace: allow teachers to sell their enriched challenge templates (payment rails + content protection on clone)', priority: 'low' },
+    ],
+  },
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+// Loaded from the embedded JSON tag. Written back on every change.
+// "Save file" downloads outerHTML which includes the updated tag.
+
+const stateTag = document.getElementById('todo-state');
+let state = JSON.parse(stateTag.textContent);
+// Ensure shape
+if (!state.checks) state.checks = {};
+if (!state.custom) state.custom = [];
+
+let showDone = false;
+
+function persistState() {
+  stateTag.textContent = '\n' + JSON.stringify(state, null, 2) + '\n';
+}
+
+function saveFile() {
+  persistState();
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'todo.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  // Brief visual feedback
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓ Saved';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '⬇ Save file'; btn.classList.remove('saved'); }, 2000);
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  let totalItems = 0, totalDone = 0;
+
+  REPOS.forEach(repo => {
+    const customForRepo = state.custom.filter(c => c.repo === repo.id);
+    const allItems = [...repo.items, ...customForRepo];
+    const doneCount = allItems.filter(i => state.checks[i.id]).length;
+    totalItems += allItems.length;
+    totalDone  += doneCount;
+
+    const section = document.createElement('div');
+    section.className = 'repo';
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'repo-header';
+    hdr.innerHTML = `
+      <div class="repo-title">
+        <span class="repo-dot ${repo.dot}"></span>
+        ${repo.label}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="repo-meta">${doneCount}/${allItems.length} done</span>
+        <span class="repo-toggle open">▼</span>
+      </div>`;
+    hdr.addEventListener('click', () => {
+      section.querySelector('.repo-body').classList.toggle('collapsed');
+      hdr.querySelector('.repo-toggle').classList.toggle('open');
+    });
+    section.appendChild(hdr);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'repo-body';
+
+    allItems.forEach(item => {
+      if (!showDone && state.checks[item.id]) return;
+
+      const row = document.createElement('div');
+      row.className = 'item' + (state.checks[item.id] ? ' done' : '');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'cb-' + item.id;
+      cb.checked = !!state.checks[item.id];
+      cb.addEventListener('change', () => {
+        state.checks[item.id] = cb.checked;
+        persistState();
+        render();
+      });
+
+      const lbl = document.createElement('label');
+      lbl.htmlFor = cb.id;
+      lbl.textContent = item.text;
+
+      row.appendChild(cb);
+      row.appendChild(lbl);
+
+      if (item.priority) {
+        const badge = document.createElement('span');
+        badge.className = 'priority p-' + item.priority;
+        badge.textContent = item.priority;
+        row.appendChild(badge);
+      }
+
+      if (customForRepo.some(c => c.id === item.id)) {
+        const del = document.createElement('button');
+        del.className = 'del-btn';
+        del.title = 'Remove item';
+        del.textContent = '✕';
+        del.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!confirm('Remove this item?')) return;
+          state.custom = state.custom.filter(c => c.id !== item.id);
+          delete state.checks[item.id];
+          persistState();
+          render();
+        });
+        row.appendChild(del);
+      }
+
+      body.appendChild(row);
+    });
+
+    // Add-item row
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = 'Add item…';
+    const sel = document.createElement('select');
+    ['high', 'medium', 'low'].forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      if (p === 'medium') opt.selected = true;
+      sel.appendChild(opt);
+    });
+    const btn = document.createElement('button');
+    btn.textContent = '+';
+    btn.addEventListener('click', () => {
+      const text = inp.value.trim();
+      if (!text) return;
+      const id = repo.id + '-c-' + Date.now();
+      state.custom.push({ id, repo: repo.id, text, priority: sel.value });
+      persistState();
+      inp.value = '';
+      render();
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+    addRow.appendChild(inp); addRow.appendChild(sel); addRow.appendChild(btn);
+    body.appendChild(addRow);
+
+    section.appendChild(body);
+    board.appendChild(section);
+  });
+
+  document.getElementById('global-stats').textContent =
+    `${totalDone} of ${totalItems} done`;
+}
+
+document.getElementById('toggle-done').addEventListener('change', function () {
+  showDone = this.checked;
+  render();
+});
+
+render();
+</script>
+
+
+</body></html>

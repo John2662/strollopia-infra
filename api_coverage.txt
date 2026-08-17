@@ -1,0 +1,9 @@
+api_coverage.csv is written with 107 rows. A few things worth noting:
+
+  - /api/content/data-logger/ — both data_logger and map_builder call this as /api/content/data-logger/upload/, which doesn't match any registered URL; it's mapped here to the list
+  endpoint since no upload/ action exists in content/urls.py.
+  - 4 media/ui_support rows at the bottom (signed-download-url, signed-url/, media-file/…/process/, trans_manage/) are called by wysiwyg_editor or map_builder but do not appear in any
+  urls.py — they may be undocumented views, stale client code, or endpoints in a separate service.
+  - strollopia-native is the most minimal client — only 4 endpoints (pairing code, generic login, selector token, route submit).
+  - strollopia_website only hits public/infra endpoints: sandbox, org creation, contact, and language listing.
+  - data_logger has the broadest coverage by far, hitting nearly every app including geo and tiles.

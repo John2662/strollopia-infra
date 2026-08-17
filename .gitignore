@@ -1,0 +1,33 @@
+# Sub-repos — each is its own git repository
+data_logger/
+feature-registry/
+map_builder/
+strollopia-api/
+strollopia-clean/
+strollopia-map-stitch/
+strollopia-native/
+strollopia-org-setup/
+strollopia-pwa/
+strollopia-scripts/
+strollopia-sites/
+strollopia_website/
+wysiwyg_editor/
+
+# Embedded git repos in future_ideas
+future_ideas/django-map-widgets/
+future_ideas/strollopia-json-diff/
+future_ideas/vue_builder/
+future_ideas/vue_frontend/
+
+# Python bytecode
+**/__pycache__/
+**/*.pyc
+
+# Local Claude artifacts
+.claude/
+.superpowers/
+claude-resume.txt
+
+# Binary / large files
+api_coverage.ods
+*.pdf

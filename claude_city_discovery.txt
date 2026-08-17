@@ -1,0 +1,3 @@
+To resume in a new session, just open Claude Code in /home/john/strollopia_git_hub/strollopia-clean and say something like: "I was building
+  city_discover.py — it's complete, next step is to run it against Innsbruck with a real Google Places API key."
+
