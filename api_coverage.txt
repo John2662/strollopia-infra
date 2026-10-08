@@ -1,3 +1,60 @@
+api_coverage.csv refreshed 2026-10-08 (previous refresh 2026-09-16, kept below).
+
+WHAT CHANGED IN THIS PASS
+  - Every live route now has a row: 199 rows, built from `manage.py show_urls` (format-suffix
+    duplicates dropped). New since 2026-09-16: the routing plugin (31 routes), addresses /
+    geocoding, the monitoring sub-routes health-check/errors|host-history|host-stats, the API
+    roots/docs, and the challenges app as one row per route (was a single summary row).
+  - Client columns added: strollopia_monitor (strollopia-monitor repo) and strollopia_api_embed
+    (strollopia-api's own embed: content/static + templates). strollopia-sites now also covers
+    its Cloudflare Pages functions (e.g. kentvillemurals-ca functions/[slug].js).
+  - Existing client cells were NOT overwritten; the re-check is in the new columns.
+
+NEW COLUMNS
+  status_2026_10_08   used | no-caller | removed | broken-call | framework
+                      removed     = in the CSV but no longer a live route (11 rows: /api/content/data-logger/, /api/content/data-logger/<pk>/, /api/org/org-policy/<pk>/, /api/media/signed-url/, /api/media/media-file/<publicUploadID>/process/, /api/ui_support/supported-languages/<pk>/, /api/ui_support/translations/<pk>/, /api/ui_support/configs/<pk>/, /api/ui_support/update_config/, /api/ui_support/ui_data/, /api/ui_support/trans_manage/)
+                      broken-call = a client calls a route that does not exist
+                      framework   = API roots, schema and docs (keep)
+  callers_2026_10_08  first matching file:line per client from a pattern search of current code
+                      (tests, docs, *.md, build output, logs and virtualenvs excluded; a route ending
+                      in an id only matches when an id-like value follows the path).
+  review_decision     keep | stub-keep | remove | removed  -  BLANK = still to review.
+                      "stub-keep" = no caller yet, but kept on purpose for planned work (say what).
+  review_note         why: evidence, the planned feature a stub belongs to, or the removal reason.
+
+HOW TO USE IT
+  Review every row with status no-caller and a blank review_decision, one at a time, and record
+  keep / stub-keep (with the feature) / remove. Removals then go into strollopia-api one group per
+  reviewed commit (route + view + tests; models stay). The deprecate column is the 2026-09-16
+  recommendation, kept for reference; review_decision is the decision.
+
+CORRECTIONS TO THE 2026-09-16 PASS
+  - /api/health-check/ was flagged deprecate=Y but is used by the strollopia-sites dashboard
+    (dashboard/app.js) and by strollopia-monitor -> un-deprecated, keep.
+  - /api/core/user/<pk>/ is used by the strollopia-sites Users tab (PATCH). The list route
+    /api/core/user/ has no caller of its own (USER_DELETE constants append an id).
+  - /api/org/poi-redirects/<str:slug>/ is load-bearing: the Kentville mural QR codes resolve
+    through it (functions/[slug].js, 17 physical plaques).
+  - /api/sandbox/ (create) has no caller: strollopia_website only uses sandbox/request and
+    sandbox/next-available.
+  - Still broken: map_builder/lib/download.ts:7 calls /api/media/signed-download-url/, which does
+    not exist.
+  - 7 rows stay "used" on the 2026-09-16 audit's evidence only (URL built indirectly; marked in
+    review_note).
+
+TO REVIEW (79 routes with no caller)
+  routing (33): /routing/degradation-rules/, /routing/degradation-rules/<pk>/, /routing/job-import-rejections/, /routing/job-import-rejections/<pk>/, /routing/job-import-rejections/<pk>/dismiss/, /routing/job-imports/, /routing/job-imports/<pk>/, /routing/job-notices/, /routing/job-notices/<pk>/, /routing/job-notices/<pk>/resolve/, /routing/jobs/, /routing/jobs/<pk>/, /routing/jobs/<pk>/acknowledge/, /routing/jobs/<pk>/cancel/, /routing/jobs/<pk>/complete/, /routing/jobs/<pk>/flag/, /routing/jobs/<pk>/note/, /routing/jobs/<pk>/reopen/, /routing/jobs/<pk>/set-location/, /routing/jobs/<pk>/start/, /routing/me/, /routing/my-day/, /routing/plan-runs/, /routing/plan-runs/<pk>/, /routing/plan-runs/<pk>/publish/, /routing/settings/, /routing/skills/, /routing/skills/<pk>/, /routing/technician-days/, /routing/technician-days/<pk>/, /routing/technician-imports/, /routing/technicians/, /routing/technicians/<pk>/
+  core (12): /sandbox/, /sandbox/demo-list/, /sandbox/invite-create/, /sandbox/invite-list/, /sandbox/invite-validate/, /sandbox/<int:pk>/extend/, /sandbox/<int:pk>/release/, /core/user_crud/, /core/user_crud/<pk>/, /core/org-access-grants/, /core/org-access-grants/<pk>/, /core/admin/organizations/initialize/
+  content (11): /content/maps/t/<uuid:token>/, /content/maps/<pk>/upload-image/, /content/maps/<pk>/regenerate-token/, /content/pois/poi_slugs/, /content/pois/<pk>/transfer_poi_to_map/, /content/poi-engagement/<pk>/add-rating/, /content/poi-engagement/<pk>/increment-interested/, /content/poi-engagement/<pk>/increment-likes/, /content/tag-map-list/, /content/tag-map-add/, /content/tag-map-remove/
+  org (11): /org/media-types/, /org/media-types/<pk>/, /org/route-mapper/<int:pk>/submit-to-library/, /org/trail/, /org/trail/list/, /org/trail/<int:pk>/, /org/tracking-sessions/, /org/tracking-sessions/<uuid:uuid>/, /org/route-upload/, /org/anon-lookup/, /org/change-domain/
+  addresses (5): /poi/addresses/, /poi/addresses/<pk>/, /addresses/geocode/, /addresses/saved-locations/, /addresses/saved-locations/<pk>/
+  media_pipeline (2): /media/upload/<pk>/, /media/quota/
+  ui_support (2): /ui_support/ui_data/<pk>/, /ui_support/strings_upload/
+  open_hours (2): /poi/open_hours/, /poi/open_hours/<pk>/
+  user (1): /user/token/
+
+======================================================================================
+
 api_coverage.csv refreshed 2026-09-16 (previously Aug 17). Now 136 data rows (was 113) — 135 real tracked endpoints/rows plus one summary row collapsing the entire new `challenges` app (16 real endpoints) for readability. 43 rows flagged deprecate=Y (was 45; net effect of un-deprecating poi-engagement/ + poi-engagement/<pk>/, which the Aug-17 pass had wrong — see below — with no newly-added endpoint needing a Y this pass).
 
 CLIENT COLUMNS CHANGED THIS PASS (confirmed with John 2026-09-16):
