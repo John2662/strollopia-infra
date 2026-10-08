@@ -42,16 +42,24 @@ CORRECTIONS TO THE 2026-09-16 PASS
   - 7 rows stay "used" on the 2026-09-16 audit's evidence only (URL built indirectly; marked in
     review_note).
 
-TO REVIEW (79 routes with no caller)
-  routing (33): /routing/degradation-rules/, /routing/degradation-rules/<pk>/, /routing/job-import-rejections/, /routing/job-import-rejections/<pk>/, /routing/job-import-rejections/<pk>/dismiss/, /routing/job-imports/, /routing/job-imports/<pk>/, /routing/job-notices/, /routing/job-notices/<pk>/, /routing/job-notices/<pk>/resolve/, /routing/jobs/, /routing/jobs/<pk>/, /routing/jobs/<pk>/acknowledge/, /routing/jobs/<pk>/cancel/, /routing/jobs/<pk>/complete/, /routing/jobs/<pk>/flag/, /routing/jobs/<pk>/note/, /routing/jobs/<pk>/reopen/, /routing/jobs/<pk>/set-location/, /routing/jobs/<pk>/start/, /routing/me/, /routing/my-day/, /routing/plan-runs/, /routing/plan-runs/<pk>/, /routing/plan-runs/<pk>/publish/, /routing/settings/, /routing/skills/, /routing/skills/<pk>/, /routing/technician-days/, /routing/technician-days/<pk>/, /routing/technician-imports/, /routing/technicians/, /routing/technicians/<pk>/
-  core (12): /sandbox/, /sandbox/demo-list/, /sandbox/invite-create/, /sandbox/invite-list/, /sandbox/invite-validate/, /sandbox/<int:pk>/extend/, /sandbox/<int:pk>/release/, /core/user_crud/, /core/user_crud/<pk>/, /core/org-access-grants/, /core/org-access-grants/<pk>/, /core/admin/organizations/initialize/
-  content (11): /content/maps/t/<uuid:token>/, /content/maps/<pk>/upload-image/, /content/maps/<pk>/regenerate-token/, /content/pois/poi_slugs/, /content/pois/<pk>/transfer_poi_to_map/, /content/poi-engagement/<pk>/add-rating/, /content/poi-engagement/<pk>/increment-interested/, /content/poi-engagement/<pk>/increment-likes/, /content/tag-map-list/, /content/tag-map-add/, /content/tag-map-remove/
-  org (11): /org/media-types/, /org/media-types/<pk>/, /org/route-mapper/<int:pk>/submit-to-library/, /org/trail/, /org/trail/list/, /org/trail/<int:pk>/, /org/tracking-sessions/, /org/tracking-sessions/<uuid:uuid>/, /org/route-upload/, /org/anon-lookup/, /org/change-domain/
-  addresses (5): /poi/addresses/, /poi/addresses/<pk>/, /addresses/geocode/, /addresses/saved-locations/, /addresses/saved-locations/<pk>/
-  media_pipeline (2): /media/upload/<pk>/, /media/quota/
-  ui_support (2): /ui_support/ui_data/<pk>/, /ui_support/strings_upload/
-  open_hours (2): /poi/open_hours/, /poi/open_hours/<pk>/
-  user (1): /user/token/
+REVIEW DONE 2026-10-08 (John, one group at a time) - all 79 no-caller routes decided:
+  stub-keep 64  kept on purpose for planned work (the feature is in review_note):
+                routing plugin (33) + addresses (3) - HECH dispatch UI not built yet;
+                poi-engagement ratings / interested / likes; maps/t/<token> + regenerate-token
+                (private link sharing); maps upload-image; pois poi_slugs (QR/slug admin);
+                transfer_poi_to_map; sandbox superadmin tools (7); org-access-grants (pending
+                backlog cross-org-oversight); JSON organizations/initialize (self-serve sign-up);
+                GPS/trail building for strollopia-native (tracking-sessions, route-upload, trail,
+                submit-to-library); org/change-domain (future self-serve, must reuse
+                rename_org_domain's safeguards); media/quota (storage display, Stripe tiers);
+                ui_support/strings_upload (interface translations).
+  keep 1        org/anon-lookup/ - strollopia-scripts get_public_data.py 'email'.
+  remove 14     user/token/; content/tag-map-list|add|remove; org/media-types/ (+<pk>) (switch
+                get_public_data.py 'media' to org/layouts/ first); media/upload/<pk>/;
+                ui_support/ui_data/<pk>/ (only editor_proxy.py, being retired); poi/open_hours/
+                (+<pk>); poi/addresses/ (+<pk>); core/user_crud/ (+<pk>).
+  Removals go into strollopia-api one group per reviewed commit (route + view + tests; models
+  stay), then review_decision is set to "removed".
 
 ======================================================================================
 
